@@ -1,11 +1,13 @@
 const token = @import("../token/token.zig");
 const std = @import("std");
+const str = std.fmt.allocPrint;
 
 const Lexer: type = struct {
-    input: []const u8,
+    input: []u8,
     position: u8 = 0,
     readPosition: u8 = 0,
     ch: u8 = 0,
+    alloc: std.mem.Allocator,
 
     fn readChar(self: *Lexer) void {
         if (self.readPosition >= self.input.len) {
@@ -17,37 +19,45 @@ const Lexer: type = struct {
         self.readPosition += 1;
     }
 
-    fn NextToken(self: *Lexer) token.Token {
+    fn NextToken(self: *Lexer) !token.Token {
         var tok: token.Token = undefined;
 
         switch (self.ch) {
             '=' => {
-                const literal = [_]u8{self.ch};
-                tok = newToken(token.TokenType.ASSIGN, &literal);
+                const literal = try str(self.alloc, "=", .{});
+                tok = newToken(token.TokenType.ASSIGN, literal);
             },
             ';' => {
-                tok = newToken(token.TokenType.SEMICOLON, [_]u8{self.ch});
+                const literal = try str(self.alloc, ";", .{});
+                tok = newToken(token.TokenType.SEMICOLON, literal);
             },
             '(' => {
-                tok = newToken(token.TokenType.LPAREN, [_]u8{self.ch});
+                const literal = try str(self.alloc, "()", .{});
+                tok = newToken(token.TokenType.LPAREN, literal);
             },
             ')' => {
-                tok = newToken(token.TokenType.RPAREN, [_]u8{self.ch});
+                const literal = try str(self.alloc, ")", .{});
+                tok = newToken(token.TokenType.RPAREN, literal);
             },
             ',' => {
-                tok = newToken(token.TokenType.COMMA, [_]u8{self.ch});
+                const literal = try str(self.alloc, ",", .{});
+                tok = newToken(token.TokenType.COMMA, literal);
             },
             '+' => {
-                tok = newToken(token.TokenType.PLUS, [_]u8{self.ch});
+                const literal = try str(self.alloc, "+", .{});
+                tok = newToken(token.TokenType.PLUS, literal);
             },
             '{' => {
-                tok = newToken(token.TokenType.LBRACE, [_]u8{self.ch});
+                const literal = try str(self.alloc, "{", .{});
+                tok = newToken(token.TokenType.LBRACE, literal);
             },
             '}' => {
-                tok = newToken(token.TokenType.RBRACE, [_]u8{self.ch});
+                const literal = try str(self.alloc, "}", .{});
+                tok = newToken(token.TokenType.RBRACE, literal);
             },
             0 => {
-                tok = newToken(token.TokenType.EOF, 0);
+                // ?
+                tok = newToken(token.TokenType.EOF, literal);
             },
             else => unreachable,
         }
@@ -55,59 +65,61 @@ const Lexer: type = struct {
         return tok;
     }
 
-    fn newToken(tokenType: token.TokenType, ch: *const []u8) token.Token {
-        return token.Token{ .Type = tokenType, .Literal = ch };
+    fn newToken(tokenType: token.TokenType, literal: []u8) token.Token {
+        return token.Token{ .Type = tokenType, .Literal = literal };
     }
 };
 
 fn New(input: []const u8) *Lexer {
-    var lex = Lexer{ .input = input };
+    const alloc = std.heap.page_allocator;
+    var lex = Lexer{ .input = input, .alloc = alloc };
     lex.readChar();
     return &lex;
 }
 
 test "NextToken" {
     const input: []const u8 = "=+(){},;";
+    const alloc = std.heap.page_allocator;
 
     const expected = [_]struct {
         Type: token.TokenType,
-        Literal: []const u8,
+        Literal: []u8,
     }{
         .{
             .Type = token.TokenType.ASSIGN,
-            .Literal = "=",
+            .Literal = try std.fmt.allocPrint(alloc, "=", .{}),
         },
         .{
             .Type = token.TokenType.PLUS,
-            .Literal = "+",
+            .Literal = try std.fmt.allocPrint(alloc, "=", .{}),
         },
         .{
             .Type = token.TokenType.LPAREN,
-            .Literal = "(",
+            .Literal = try std.fmt.allocPrint(alloc, "=", .{}),
         },
         .{
             .Type = token.TokenType.RPAREN,
-            .Literal = ")",
+            .Literal = try std.fmt.allocPrint(alloc, "=", .{}),
         },
         .{
             .Type = token.TokenType.LBRACE,
-            .Literal = "{",
+            .Literal = try std.fmt.allocPrint(alloc, "=", .{}),
         },
         .{
             .Type = token.TokenType.RBRACE,
-            .Literal = "}",
+            .Literal = try std.fmt.allocPrint(alloc, "=", .{}),
         },
         .{
             .Type = token.TokenType.COMMA,
-            .Literal = ",",
+            .Literal = try std.fmt.allocPrint(alloc, "=", .{}),
         },
         .{
             .Type = token.TokenType.SEMICOLON,
-            .Literal = ";",
+            .Literal = try std.fmt.allocPrint(alloc, "=", .{}),
         },
         .{
             .Type = token.TokenType.EOF,
-            .Literal = "",
+            .Literal = try std.fmt.allocPrint(alloc, "=", .{}),
         },
     };
 
