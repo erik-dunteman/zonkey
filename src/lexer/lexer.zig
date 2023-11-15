@@ -32,7 +32,7 @@ const Lexer: type = struct {
                 tok = newToken(token.TokenType.SEMICOLON, literal);
             },
             '(' => {
-                const literal = try str(self.alloc, "()", .{});
+                const literal = try str(self.alloc, "(", .{});
                 tok = newToken(token.TokenType.LPAREN, literal);
             },
             ')' => {
@@ -48,15 +48,15 @@ const Lexer: type = struct {
                 tok = newToken(token.TokenType.PLUS, literal);
             },
             '{' => {
-                const literal = try str(self.alloc, "{", .{});
+                const literal = try str(self.alloc, "{s}", .{"{"});
                 tok = newToken(token.TokenType.LBRACE, literal);
             },
             '}' => {
-                const literal = try str(self.alloc, "}", .{});
+                const literal = try str(self.alloc, "{s}", .{"}"});
                 tok = newToken(token.TokenType.RBRACE, literal);
             },
             0 => {
-                // ?
+                const literal = try str(self.alloc, "{}", .{0});
                 tok = newToken(token.TokenType.EOF, literal);
             },
             else => unreachable,
@@ -70,7 +70,7 @@ const Lexer: type = struct {
     }
 };
 
-fn New(input: []const u8) *Lexer {
+fn New(input: []u8) *Lexer {
     const alloc = std.heap.page_allocator;
     var lex = Lexer{ .input = input, .alloc = alloc };
     lex.readChar();
@@ -78,8 +78,13 @@ fn New(input: []const u8) *Lexer {
 }
 
 test "NextToken" {
-    const input: []const u8 = "=+(){},;";
+    // const input: []u8 = "=+(){},;";
     const alloc = std.heap.page_allocator;
+    var input = try str(alloc, "{s}", .{"=+(){},;"});
+
+    // some sanity checks I'm doing the strings correctly
+    try std.testing.expectEqual(input[0], '=');
+    try std.testing.expectEqual(input[1], '+');
 
     const expected = [_]struct {
         Type: token.TokenType,
@@ -127,7 +132,7 @@ test "NextToken" {
 
     for (expected, 0..) |expect, i| {
         _ = i;
-        const tok = lex.NextToken();
+        const tok = try lex.NextToken();
 
         try std.testing.expectEqual(tok.Type, expect.Type);
         try std.testing.expectEqual(tok.Literal, expect.Literal);
