@@ -126,6 +126,20 @@ const Lexer = struct {
         self.position += tok_len;
         return tok;
     }
+
+    fn isLetter(ch: u8) bool {
+        return (('a' <= ch and ch <= 'z') or ('A' <= ch and ch <= 'Z') or ch == '_');
+    }
+
+    fn readIdentifier(self: *Lexer) []u8 {
+        var starting_position = self.position;
+
+        while (isLetter(self.input[self.position])) {
+            self.position += 1;
+        }
+
+        return self.input[starting_position..self.position];
+    }
 };
 
 fn New(input: []const u8) Lexer {
