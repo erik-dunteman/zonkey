@@ -63,8 +63,14 @@ test "NextToken" {
     var i: u8 = 0;
     while (lex.nextToken()) |tok| : (i += 1) {
         const expected_tok = expected[i];
-        try std.testing.expectEqual(tok.type, expected_tok.type);
-        try std.testing.expectEqual(tok.literal[0], expected_tok.literal[0]);
+        try std.testing.expectEqual(
+            expected_tok.type,
+            tok.type,
+        );
+        try std.testing.expectEqual(
+            expected_tok.literal[0],
+            tok.literal[0],
+        );
     }
 }
 
@@ -77,7 +83,14 @@ const Lexer = struct {
             return null;
         }
 
-        const ch = self.input[self.position];
+        // read at position
+        var ch: u8 = self.input[self.position];
+        // read until non-whitespace
+        while (isWhitespace(ch)) {
+            self.position += 1;
+            ch = self.input[self.position];
+        }
+        print("read char |{s}|\n", .{self.input[self.position .. self.position + 1]});
 
         var tok_len: usize = undefined;
         var tok: token.Token = undefined;
@@ -120,14 +133,29 @@ const Lexer = struct {
             0 => {
                 return null;
             },
+
+            // handle arbitrary identifiers
             else => |c| {
                 if (isLetter(c)) {
-                    tok = token.Token{};
                     const lit = self.readIdentifier();
-                    tok.literal = lit;
+                    tok = token.Token{
+                        .type = token.lookupIdent(lit),
+                        .literal = lit,
+                    };
+                    print("ident {s}\n", .{lit});
+                    tok_len = lit.len;
+                    return tok;
+                } else if (isDigit(c)) {
+                    const lit = self.readNumber();
+                    tok = token.Token{
+                        .type = token.TokenType.INT,
+                        .literal = lit,
+                    };
+                    print("digit {s}\n", .{lit});
                     tok_len = lit.len;
                     return tok;
                 } else {
+                    print("here for some reason\n", .{});
                     tok = token.Token{ .type = token.TokenType.ILLEGAL };
                     return tok;
                 }
@@ -142,10 +170,28 @@ const Lexer = struct {
         return (('a' <= ch and ch <= 'z') or ('A' <= ch and ch <= 'Z') or ch == '_');
     }
 
+    fn isDigit(ch: u8) bool {
+        return ('0' <= ch and ch <= '9');
+    }
+
+    fn isWhitespace(ch: u8) bool {
+        return (ch == ' ' or ch == ' ' or ch == '\n' or ch == '\t' or ch == '\r');
+    }
+
     fn readIdentifier(self: *Lexer) []const u8 {
         var starting_position = self.position;
 
         while (isLetter(self.input[self.position])) {
+            self.position += 1;
+        }
+
+        return self.input[starting_position..self.position];
+    }
+
+    fn readNumber(self: *Lexer) []const u8 {
+        var starting_position = self.position;
+
+        while (isDigit(self.input[self.position])) {
             self.position += 1;
         }
 
