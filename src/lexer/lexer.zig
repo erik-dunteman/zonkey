@@ -79,7 +79,7 @@ const Lexer = struct {
 
         const ch = self.input[self.position];
 
-        var tok_len: u8 = undefined;
+        var tok_len: usize = undefined;
         var tok: token.Token = undefined;
 
         // switch on ch
@@ -120,7 +120,18 @@ const Lexer = struct {
             0 => {
                 return null;
             },
-            else => unreachable,
+            else => |c| {
+                if (isLetter(c)) {
+                    tok = token.Token{};
+                    const lit = self.readIdentifier();
+                    tok.literal = lit;
+                    tok_len = lit.len;
+                    return tok;
+                } else {
+                    tok = token.Token{ .type = token.TokenType.ILLEGAL };
+                    return tok;
+                }
+            },
         }
 
         self.position += tok_len;
@@ -131,7 +142,7 @@ const Lexer = struct {
         return (('a' <= ch and ch <= 'z') or ('A' <= ch and ch <= 'Z') or ch == '_');
     }
 
-    fn readIdentifier(self: *Lexer) []u8 {
+    fn readIdentifier(self: *Lexer) []const u8 {
         var starting_position = self.position;
 
         while (isLetter(self.input[self.position])) {

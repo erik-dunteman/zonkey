@@ -1,7 +1,7 @@
 const std = @import("std");
 
 pub const TokenType = enum {
-    Illegal,
+    ILLEGAL,
     EOF,
 
     // identifiers and literals
@@ -27,8 +27,8 @@ pub const TokenType = enum {
 };
 
 pub const Token: type = struct {
-    type: TokenType,
-    literal: []const u8,
+    type: TokenType = undefined,
+    literal: []const u8 = undefined,
 };
 
 pub fn print() void {
