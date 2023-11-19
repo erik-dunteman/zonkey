@@ -62,6 +62,7 @@ test "NextToken" {
     var lex = New(input);
     var i: u8 = 0;
     while (lex.nextToken()) |tok| : (i += 1) {
+        print("{s}\t{}\n", .{ tok.literal, tok.type });
         const expected_tok = expected[i];
         try std.testing.expectEqual(
             expected_tok.type,
@@ -79,90 +80,91 @@ const Lexer = struct {
     position: usize = 0,
 
     fn nextToken(self: *Lexer) ?token.Token {
+        // handle end of file case
         if (self.position >= self.input.len) {
             return null;
         }
 
-        // read at position
+        // read character at position
         var ch: u8 = self.input[self.position];
-        // read until non-whitespace
+
+        // it could be whitespace, if so keep reading and advancing position
         while (isWhitespace(ch)) {
             self.position += 1;
             ch = self.input[self.position];
         }
-        print("read char |{s}|\n", .{self.input[self.position .. self.position + 1]});
 
-        var tok_len: usize = undefined;
         var tok: token.Token = undefined;
+        var token_len: usize = undefined;
 
-        // switch on ch
+        // switch on the character
+        // and determine which token it represents
         switch (ch) {
             '=' => {
-                tok_len = 1;
-                tok = token.Token{ .type = token.TokenType.ASSIGN, .literal = self.input[self.position .. self.position + tok_len] };
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.ASSIGN, .literal = self.input[self.position .. self.position + token_len] };
             },
-
             ';' => {
-                tok_len = 1;
-                tok = token.Token{ .type = token.TokenType.SEMICOLON, .literal = self.input[self.position .. self.position + tok_len] };
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.SEMICOLON, .literal = self.input[self.position .. self.position + token_len] };
             },
             '(' => {
-                tok_len = 1;
-                tok = token.Token{ .type = token.TokenType.LPAREN, .literal = self.input[self.position .. self.position + tok_len] };
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.LPAREN, .literal = self.input[self.position .. self.position + token_len] };
             },
             ')' => {
-                tok_len = 1;
-                tok = token.Token{ .type = token.TokenType.RPAREN, .literal = self.input[self.position .. self.position + tok_len] };
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.RPAREN, .literal = self.input[self.position .. self.position + token_len] };
             },
             ',' => {
-                tok_len = 1;
-                tok = token.Token{ .type = token.TokenType.COMMA, .literal = self.input[self.position .. self.position + tok_len] };
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.COMMA, .literal = self.input[self.position .. self.position + token_len] };
             },
             '+' => {
-                tok_len = 1;
-                tok = token.Token{ .type = token.TokenType.PLUS, .literal = self.input[self.position .. self.position + tok_len] };
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.PLUS, .literal = self.input[self.position .. self.position + token_len] };
             },
             '{' => {
-                tok_len = 1;
-                tok = token.Token{ .type = token.TokenType.LBRACE, .literal = self.input[self.position .. self.position + tok_len] };
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.LBRACE, .literal = self.input[self.position .. self.position + token_len] };
             },
             '}' => {
-                tok_len = 1;
-                tok = token.Token{ .type = token.TokenType.RBRACE, .literal = self.input[self.position .. self.position + tok_len] };
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.RBRACE, .literal = self.input[self.position .. self.position + token_len] };
             },
             0 => {
                 return null;
             },
 
-            // handle arbitrary identifiers
+            // handle identifiers and multi-character tokens
             else => |c| {
                 if (isLetter(c)) {
+                    // could be a langauge keyword, or a user's variable name
                     const lit = self.readIdentifier();
                     tok = token.Token{
                         .type = token.lookupIdent(lit),
                         .literal = lit,
                     };
-                    print("ident {s}\n", .{lit});
-                    tok_len = lit.len;
+                    token_len = lit.len;
                     return tok;
                 } else if (isDigit(c)) {
+                    // could be a multi-digit number
                     const lit = self.readNumber();
                     tok = token.Token{
                         .type = token.TokenType.INT,
                         .literal = lit,
                     };
-                    print("digit {s}\n", .{lit});
-                    tok_len = lit.len;
+                    token_len = lit.len;
                     return tok;
                 } else {
-                    print("here for some reason\n", .{});
+                    // final default case. If we haven't identified the token by now, it's illegal
                     tok = token.Token{ .type = token.TokenType.ILLEGAL };
                     return tok;
                 }
             },
         }
 
-        self.position += tok_len;
+        self.position += token_len;
         return tok;
     }
 

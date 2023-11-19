@@ -16,9 +16,6 @@ pub const TokenType = enum {
     COMMA,
     SEMICOLON,
 
-    // space
-    WHITESPACE,
-
     LPAREN,
     RPAREN,
     LBRACE,
