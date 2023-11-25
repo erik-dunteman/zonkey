@@ -3,7 +3,7 @@ const std = @import("std");
 const str = std.fmt.allocPrint;
 const print = std.debug.print;
 
-test "NextToken" {
+test "lexer" {
     print("\n", .{});
     defer {
         print("\n", .{});
@@ -18,6 +18,14 @@ test "NextToken" {
         \\};
         \\
         \\let result = add(five, ten);
+        \\!-/*5;
+        \\5 < 10 > 5;
+        \\
+        \\if (5 < 10) {
+        \\  return true;
+        \\} else {
+        \\  return false;
+        \\}
     ;
 
     const expected = [_]token.Token{
@@ -57,6 +65,35 @@ test "NextToken" {
         .{ .type = token.TokenType.IDENT, .literal = "ten" },
         .{ .type = token.TokenType.RPAREN, .literal = ")" },
         .{ .type = token.TokenType.SEMICOLON, .literal = ";" },
+        .{ .type = token.TokenType.BANG, .literal = "!" },
+        .{ .type = token.TokenType.MINUS, .literal = "-" },
+        .{ .type = token.TokenType.SLASH, .literal = "/" },
+        .{ .type = token.TokenType.ASTERISK, .literal = "*" },
+        .{ .type = token.TokenType.INT, .literal = "5" },
+        .{ .type = token.TokenType.SEMICOLON, .literal = ";" },
+        .{ .type = token.TokenType.INT, .literal = "5" },
+        .{ .type = token.TokenType.LT, .literal = "<" },
+        .{ .type = token.TokenType.INT, .literal = "10" },
+        .{ .type = token.TokenType.GT, .literal = ">" },
+        .{ .type = token.TokenType.INT, .literal = "5" },
+        .{ .type = token.TokenType.SEMICOLON, .literal = ";" },
+        .{ .type = token.TokenType.IF, .literal = "if" },
+        .{ .type = token.TokenType.LPAREN, .literal = "(" },
+        .{ .type = token.TokenType.INT, .literal = "5" },
+        .{ .type = token.TokenType.LT, .literal = "<" },
+        .{ .type = token.TokenType.INT, .literal = "10" },
+        .{ .type = token.TokenType.RPAREN, .literal = ")" },
+        .{ .type = token.TokenType.LBRACE, .literal = "{" },
+        .{ .type = token.TokenType.RETURN, .literal = "return" },
+        .{ .type = token.TokenType.TRUE, .literal = "true" },
+        .{ .type = token.TokenType.SEMICOLON, .literal = ";" },
+        .{ .type = token.TokenType.RBRACE, .literal = "}" },
+        .{ .type = token.TokenType.ELSE, .literal = "else" },
+        .{ .type = token.TokenType.LBRACE, .literal = "{" },
+        .{ .type = token.TokenType.RETURN, .literal = "return" },
+        .{ .type = token.TokenType.FALSE, .literal = "false" },
+        .{ .type = token.TokenType.SEMICOLON, .literal = ";" },
+        .{ .type = token.TokenType.RBRACE, .literal = "}" },
     };
 
     var lex = New(input);
@@ -100,13 +137,17 @@ const Lexer = struct {
         // switch on the character
         // and determine which token it represents
         switch (ch) {
-            '=' => {
-                token_len = 1;
-                tok = token.Token{ .type = token.TokenType.ASSIGN, .literal = self.input[self.position .. self.position + token_len] };
-            },
             ';' => {
                 token_len = 1;
                 tok = token.Token{ .type = token.TokenType.SEMICOLON, .literal = self.input[self.position .. self.position + token_len] };
+            },
+            '{' => {
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.LBRACE, .literal = self.input[self.position .. self.position + token_len] };
+            },
+            '}' => {
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.RBRACE, .literal = self.input[self.position .. self.position + token_len] };
             },
             '(' => {
                 token_len = 1;
@@ -120,17 +161,37 @@ const Lexer = struct {
                 token_len = 1;
                 tok = token.Token{ .type = token.TokenType.COMMA, .literal = self.input[self.position .. self.position + token_len] };
             },
+            '=' => {
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.ASSIGN, .literal = self.input[self.position .. self.position + token_len] };
+            },
             '+' => {
                 token_len = 1;
                 tok = token.Token{ .type = token.TokenType.PLUS, .literal = self.input[self.position .. self.position + token_len] };
             },
-            '{' => {
+            '-' => {
                 token_len = 1;
-                tok = token.Token{ .type = token.TokenType.LBRACE, .literal = self.input[self.position .. self.position + token_len] };
+                tok = token.Token{ .type = token.TokenType.MINUS, .literal = self.input[self.position .. self.position + token_len] };
             },
-            '}' => {
+            '*' => {
                 token_len = 1;
-                tok = token.Token{ .type = token.TokenType.RBRACE, .literal = self.input[self.position .. self.position + token_len] };
+                tok = token.Token{ .type = token.TokenType.ASTERISK, .literal = self.input[self.position .. self.position + token_len] };
+            },
+            '/' => {
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.SLASH, .literal = self.input[self.position .. self.position + token_len] };
+            },
+            '!' => {
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.BANG, .literal = self.input[self.position .. self.position + token_len] };
+            },
+            '<' => {
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.LT, .literal = self.input[self.position .. self.position + token_len] };
+            },
+            '>' => {
+                token_len = 1;
+                tok = token.Token{ .type = token.TokenType.GT, .literal = self.input[self.position .. self.position + token_len] };
             },
             0 => {
                 return null;

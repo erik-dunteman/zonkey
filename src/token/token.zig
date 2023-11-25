@@ -11,6 +11,12 @@ pub const TokenType = enum {
     // operators
     ASSIGN,
     PLUS,
+    MINUS,
+    BANG,
+    ASTERISK,
+    SLASH,
+    LT,
+    GT,
 
     // delimiters
     COMMA,
@@ -24,6 +30,11 @@ pub const TokenType = enum {
     // keyword
     FUNCTION,
     LET,
+    TRUE,
+    FALSE,
+    IF,
+    ELSE,
+    RETURN,
 };
 
 pub fn strCmp(a: []const u8, b: []const u8) bool {
@@ -39,6 +50,11 @@ pub fn lookupIdent(ident: []const u8) TokenType {
     const keywords = [_]Keywords{
         .{ .str = "fn", .token = TokenType.FUNCTION },
         .{ .str = "let", .token = TokenType.LET },
+        .{ .str = "true", .token = TokenType.TRUE },
+        .{ .str = "false", .token = TokenType.FALSE },
+        .{ .str = "if", .token = TokenType.IF },
+        .{ .str = "else", .token = TokenType.ELSE },
+        .{ .str = "return", .token = TokenType.RETURN },
     };
 
     inline for (keywords) |kw| {
