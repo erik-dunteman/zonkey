@@ -1,6 +1,5 @@
 const token = @import("../token/token.zig");
 const std = @import("std");
-const str = std.fmt.allocPrint;
 const print = std.debug.print;
 
 test "lexer" {
@@ -134,7 +133,7 @@ const Lexer = struct {
         return self.input[self.position + 1];
     }
 
-    fn nextToken(self: *Lexer) ?token.Token {
+    pub fn nextToken(self: *Lexer) ?token.Token {
         // handle end of file case
         if (self.position >= self.input.len) {
             return null;
@@ -146,6 +145,9 @@ const Lexer = struct {
         // it could be whitespace, if so keep reading and advancing position
         while (isWhitespace(ch)) {
             self.position += 1;
+            if (self.position >= self.input.len) {
+                return null;
+            }
             ch = self.input[self.position];
         }
 
@@ -300,7 +302,7 @@ const Lexer = struct {
     }
 };
 
-fn New(input: []const u8) Lexer {
+pub fn New(input: []const u8) Lexer {
     return .{
         .input = input,
     };
