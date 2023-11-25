@@ -17,6 +17,8 @@ pub const TokenType = enum {
     SLASH,
     LT,
     GT,
+    EQ,
+    NOT_EQ,
 
     // delimiters
     COMMA,

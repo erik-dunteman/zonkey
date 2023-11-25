@@ -26,6 +26,9 @@ test "lexer" {
         \\} else {
         \\  return false;
         \\}
+        \\
+        \\10 == 10;
+        \\10 != 9;
     ;
 
     const expected = [_]token.Token{
@@ -94,6 +97,14 @@ test "lexer" {
         .{ .type = token.TokenType.FALSE, .literal = "false" },
         .{ .type = token.TokenType.SEMICOLON, .literal = ";" },
         .{ .type = token.TokenType.RBRACE, .literal = "}" },
+        .{ .type = token.TokenType.INT, .literal = "10" },
+        .{ .type = token.TokenType.EQ, .literal = "==" },
+        .{ .type = token.TokenType.INT, .literal = "10" },
+        .{ .type = token.TokenType.SEMICOLON, .literal = ";" },
+        .{ .type = token.TokenType.INT, .literal = "10" },
+        .{ .type = token.TokenType.NOT_EQ, .literal = "!=" },
+        .{ .type = token.TokenType.INT, .literal = "9" },
+        .{ .type = token.TokenType.SEMICOLON, .literal = ";" },
     };
 
     var lex = New(input);
@@ -115,6 +126,13 @@ test "lexer" {
 const Lexer = struct {
     input: []const u8, // input buffer
     position: usize = 0,
+
+    fn peekChar(self: *Lexer) ?u8 {
+        if (self.position + 1 >= self.input.len) {
+            return null;
+        }
+        return self.input[self.position + 1];
+    }
 
     fn nextToken(self: *Lexer) ?token.Token {
         // handle end of file case
@@ -162,6 +180,16 @@ const Lexer = struct {
                 tok = token.Token{ .type = token.TokenType.COMMA, .literal = self.input[self.position .. self.position + token_len] };
             },
             '=' => {
+                // could be ==, so peek ahead for that
+                if (self.peekChar()) |nextChar| {
+                    if (nextChar == '=') {
+                        token_len = 2;
+                        tok = token.Token{ .type = token.TokenType.EQ, .literal = self.input[self.position .. self.position + token_len] };
+                        self.position += token_len;
+                        return tok;
+                    }
+                }
+                // is a simple =
                 token_len = 1;
                 tok = token.Token{ .type = token.TokenType.ASSIGN, .literal = self.input[self.position .. self.position + token_len] };
             },
@@ -182,6 +210,16 @@ const Lexer = struct {
                 tok = token.Token{ .type = token.TokenType.SLASH, .literal = self.input[self.position .. self.position + token_len] };
             },
             '!' => {
+                // could be !=, so peek ahead for that
+                if (self.peekChar()) |nextChar| {
+                    if (nextChar == '=') {
+                        token_len = 2;
+                        tok = token.Token{ .type = token.TokenType.NOT_EQ, .literal = self.input[self.position .. self.position + token_len] };
+                        self.position += token_len;
+                        return tok;
+                    }
+                }
+                // is a simple !
                 token_len = 1;
                 tok = token.Token{ .type = token.TokenType.BANG, .literal = self.input[self.position .. self.position + token_len] };
             },
