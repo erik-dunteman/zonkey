@@ -143,7 +143,7 @@ const Lexer = struct {
         var ch: u8 = self.input[self.position];
 
         // it could be whitespace, if so keep reading and advancing position
-        while (isWhitespace(ch)) {
+        while (self.isWhitespace()) {
             self.position += 1;
             if (self.position >= self.input.len) {
                 return null;
@@ -238,8 +238,8 @@ const Lexer = struct {
             },
 
             // handle identifiers and multi-character tokens
-            else => |c| {
-                if (isLetter(c)) {
+            else => {
+                if (self.isLetter()) {
                     // could be a langauge keyword, or a user's variable name
                     const lit = self.readIdentifier();
                     tok = token.Token{
@@ -248,7 +248,7 @@ const Lexer = struct {
                     };
                     token_len = lit.len;
                     return tok;
-                } else if (isDigit(c)) {
+                } else if (self.isDigit()) {
                     // could be a multi-digit number
                     const lit = self.readNumber();
                     tok = token.Token{
@@ -269,22 +269,34 @@ const Lexer = struct {
         return tok;
     }
 
-    fn isLetter(ch: u8) bool {
+    fn isLetter(self: *Lexer) bool {
+        if (self.position >= self.input.len) {
+            return false;
+        }
+        const ch = self.input[self.position];
         return (('a' <= ch and ch <= 'z') or ('A' <= ch and ch <= 'Z') or ch == '_');
     }
 
-    fn isDigit(ch: u8) bool {
+    fn isDigit(self: *Lexer) bool {
+        if (self.position >= self.input.len) {
+            return false;
+        }
+        const ch = self.input[self.position];
         return ('0' <= ch and ch <= '9');
     }
 
-    fn isWhitespace(ch: u8) bool {
+    fn isWhitespace(self: *Lexer) bool {
+        if (self.position >= self.input.len) {
+            return false;
+        }
+        const ch = self.input[self.position];
         return (ch == ' ' or ch == ' ' or ch == '\n' or ch == '\t' or ch == '\r');
     }
 
     fn readIdentifier(self: *Lexer) []const u8 {
         var starting_position = self.position;
 
-        while (isLetter(self.input[self.position])) {
+        while (self.isLetter()) {
             self.position += 1;
         }
 
@@ -294,7 +306,7 @@ const Lexer = struct {
     fn readNumber(self: *Lexer) []const u8 {
         var starting_position = self.position;
 
-        while (isDigit(self.input[self.position])) {
+        while (self.isDigit()) {
             self.position += 1;
         }
 

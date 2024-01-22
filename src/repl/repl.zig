@@ -11,7 +11,7 @@ test "repl" {
     Start();
 }
 
-fn Start() void {
+pub fn Start() void {
     const in = std.io.getStdIn();
     var buf = std.io.bufferedReader(in.reader());
     var r = buf.reader();
