@@ -6,18 +6,18 @@ const Node = union(enum) {
     statement: Statement,
     expression: Expression,
 
-    // Thanks to 'inline else', we can think of this print() as
+    // Thanks to 'inline else', we can think of this tokenLiteral() as
     // being an interface method.
-    pub fn print(self: Node) void {
+    pub fn tokenLiteral(self: Node) void {
         switch (self) {
-            inline else => |case| return case.print(),
+            inline else => |case| return case.tokenLiteral(),
         }
     }
 };
 
 test "testBoth" {
     var node = Node{ .statement = Statement{} };
-    node.print();
+    node.tokenLiteral();
     node = Node{ .expression = Expression{} };
-    node.print();
+    node.tokenLiteral();
 }
